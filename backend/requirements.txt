@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+anthropic
+langgraph
+langchain-core
+qdrant-client[fastembed]
+yfinance
+httpx
+beautifulsoup4
+lxml
+python-dotenv
+pydantic
+pydantic-settings
