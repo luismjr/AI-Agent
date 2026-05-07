@@ -2,12 +2,22 @@
 
 import { useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, KeyRound, ExternalLink } from "lucide-react";
 import { AgentTimeline } from "@/components/AgentTimeline";
 import { MarketDataCard } from "@/components/MarketDataCard";
 import { ResearchReport } from "@/components/ResearchReport";
 import { SearchForm } from "@/components/SearchForm";
 import { useStreamingAnalysis } from "@/lib/hooks/useStreamingAnalysis";
+
+function isApiKeyError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("authentication failed") ||
+    lower.includes("invalid x-api-key") ||
+    lower.includes("anthropic_api_key") ||
+    lower.includes("authentication_error")
+  );
+}
 
 function AnalyzePage() {
   const params = useSearchParams();
@@ -96,18 +106,94 @@ function AnalyzePage() {
         <div className="space-y-4 min-w-0">
           {/* Error state */}
           {error && (
-            <div className="bg-negative/10 border border-negative/30 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
-              <AlertCircle
-                size={16}
-                className="text-negative shrink-0 mt-0.5"
-              />
-              <div>
-                <p className="text-sm font-medium text-negative">
-                  Analysis Failed
+            isApiKeyError(error) ? (
+              <div className="bg-surface border border-amber-500/40 rounded-xl p-5 animate-fade-in">
+                <div className="flex items-center gap-2 mb-3">
+                  <KeyRound size={16} className="text-amber-400 shrink-0" />
+                  <p className="text-sm font-semibold text-amber-400">
+                    API Key Required
+                  </p>
+                </div>
+                <p className="text-xs text-text-secondary mb-4">
+                  FinSight needs a valid Anthropic API key configured in the
+                  backend. Follow these steps to set it up:
                 </p>
-                <p className="text-xs text-text-muted mt-1">{error}</p>
+                <ol className="space-y-3 text-xs text-text-secondary">
+                  <li className="flex gap-2.5">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px]">
+                      1
+                    </span>
+                    <span>
+                      Sign in to the{" "}
+                      <a
+                        href="https://console.anthropic.com/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline underline-offset-2 inline-flex items-center gap-0.5 hover:opacity-80"
+                      >
+                        Anthropic Console
+                        <ExternalLink size={10} />
+                      </a>
+                      {" "}— use your Anthropic credentials, or SSO if your
+                      organization uses Claude for Work.
+                    </span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px]">
+                      2
+                    </span>
+                    <span>
+                      Go to{" "}
+                      <strong className="text-text-primary">
+                        Settings → API Keys
+                      </strong>
+                      , create a new key, and copy it.
+                    </span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px]">
+                      3
+                    </span>
+                    <span>
+                      Open{" "}
+                      <code className="bg-surface-2 px-1 py-0.5 rounded text-[11px]">
+                        backend/.env
+                      </code>{" "}
+                      and set:
+                      <code className="bg-surface-2 px-2 py-1 rounded text-[11px] block mt-1.5 text-primary">
+                        ANTHROPIC_API_KEY=sk-ant-…
+                      </code>
+                    </span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px]">
+                      4
+                    </span>
+                    <span>
+                      Restart the backend so the new key loads:
+                      <code className="bg-surface-2 px-2 py-1 rounded text-[11px] block mt-1.5 text-text-primary">
+                        uvicorn app.main:app --reload --port 8000
+                      </code>
+                    </span>
+                  </li>
+                </ol>
               </div>
-            </div>
+            ) : (
+              <div className="bg-negative/10 border border-negative/30 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
+                <AlertCircle
+                  size={16}
+                  className="text-negative shrink-0 mt-0.5"
+                />
+                <div>
+                  <p className="text-sm font-medium text-negative">
+                    Analysis Failed
+                  </p>
+                  <p className="text-xs text-text-muted mt-1 whitespace-pre-line">
+                    {error}
+                  </p>
+                </div>
+              </div>
+            )
           )}
 
           {/* Empty state */}
